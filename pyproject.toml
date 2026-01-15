@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "data-manager-job-template"
-version = "1.0.3"
+name = "train-test-split"
+version = "1.0.0"
 description = "A GitHub Template Repository that you can use for Data Manager Job implementations."
 authors = [
   "Alan Christie <achristie@informaticsmatters.com>",
@@ -10,16 +10,24 @@ license = "MIT license"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.14"
 im-data-manager-job-utilities = "^1"
+# numpy = "^1.26"
+numpy = "^2"
+pandas = "^2.2"
+scipy = "^1.11"
+scikit-learn = "^1.4"
+rdkit = "^2025.9.3"
+
 
 [tool.poetry.group.dev.dependencies]
-im-jote = "^0.10.7"
+im-jote = "^0.11"
 pre-commit = "^3"
-pylint = "^3"
-isort = "^5.13.2"
-black = "^24.8.0"
-mypy = "^1.11.1"
+pylint = "^4"
+isort = "^7"
+black = "^25"
+mypy = "^1"
+
 
 [build-system]
 requires = ["poetry-core"]

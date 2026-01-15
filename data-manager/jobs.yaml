@@ -2,56 +2,148 @@
 kind: DataManagerJobDefinition
 kind-version: '2021.1'
 
-name: Template Jobs
-collection: im-template-jobs
+name: Split dataset into subsets
+collection: im-virtual-screening
 
 jobs:
 
-  echo:
-    name: Echo
+  train-test-split:
+    name: Split dataset into subsets
     description: >-
-      Echos a message and writes it to an output file
+      Split the dataset into a number of smaller sets
     version: '1.0.0'
-    category: echo
+    category: comp chem
     keywords:
-    - echo
+    - rdkit
+    - scaffold
+    - split
+    - training
+    - test
+    - validation
     image:
-      name: informaticsmatters/data-manager-job-template
-      tag: '1.0.2'
+      name: kaliif/train-test-split
+      tag: latest
       project-directory: /data
       working-directory: /data
+      fix-permissions: true
     command: >-
-      /code/echo.py --msg '{{ msg }}' --out '{{ outputFile }}'
+      /code/train_test_split.py
+      -i '{{ inputFile }}'
+      {% if omitFields is defined %}--omit-fields{% endif %}
+      {% if idColumn is defined %}--id-column '{{ idColumn }}'{% endif %}
+      {% if molColumn is defined %}--mol-column '{{ molColumn }}'{% endif %}
+      {% if yColumn is defined %}--y-column '{{ yColumn }}'{% endif %}
+      {% if readHeader is defined and readHeader %}--read-header{% endif %}
+      {% if writeHeader is defined and writeHeader %}--write-header{% endif %}
+      {% if separator is defined %}--delimiter '{{ separator }}'{% endif %}
+      {% if interval is defined %}--interval '{{ interval }}'{% endif %}
+      {% if missingVal is defined %}--missing-val '{{ missingVal }}'{% endif %}
+      {% if fragmentMethod is defined %}--fragment-method '{{ fragmentMethod }}'{% endif %}
+      {% if splitMethod is defined %}--split-method '{{ splitMethod }}'{% endif %}
+      {% if splitRatios is defined %}--split-ratios '{{ splitRatios }}'{% endif %}
+      {% if splitNames is defined %}--split-names '{{ splitNames }}'{% endif %}
     variables:
-      outputs:
-        type: object
-        properties:
-          outputFile:
-            title: Output file
-            mime-types:
-            - text/plain
-            creates: '{{ outputFile }}'
-            type: file
-        required:
+      order:
+        options:
         - outputFile
+        - omitFields
+        - idColumn
+        - molColumn
+        - yColumn
+        - readHeader
+        - writeHeader
+        - separator
+        - readRecords
+        - interval
+        - missingVal
+        - fragmentMethod
+        - splitMethod
+        - splitRatios
+        - splitNames
+      inputs:
+        type: object
+        required:
+        - inputFile
+        properties:
+          inputFile:
+            title: Input molecules
+            mime-types:
+            - chemical/x-mdl-sdfile
+            - squonk/x-smiles
+            type: file
       options:
         type: object
         properties:
-          msg:
-            title: The message to echo
+          omitFields:
+            title: Don't include fields from the input in the output
+            type: boolean
+          fragmentMethod:
+            title: Fragment method
             type: string
-        required:
-        - msg
+            default: hac
+            enum:
+            - hac
+            - mw
+            - none
+          molColumn:
+            title: Index (text) or name (SDF) to use for the ID field
+            type: string
+            pattern: "^[A-Za-z0-9_\\.\\- ]+$"
+            default: 0
+          readHeader:
+            title: Input has header line (text formats only)
+            type: boolean
+          writeHeader:
+            title: Output has header line (text formats only)
+            type: boolean
+            default: true
+          separator:
+            title: Separator for text formats
+            type: string
+            default: tab
+            enum:
+            - tab
+            - comma
+            - space
+            - pipe
+          idColumn:
+            title: Index (text) or name (SDF) to use for the ID field
+            type: string
+            pattern: "^[A-Za-z0-9_\\.\\- ]+$"
+          splitMethod:
+            title: Fragment method
+            type: string
+            default: random
+            enum:
+            - random
+            - scaffold
+          splitRatios:
+            title: Split ratios
+            type: string
+          splitNames:
+            title: Split names
+            type: string
     # Tests
     tests:
       simple-execution:
         options:
-          outputFile: echo.txt
-          msg: Hello, World!
+          inputFile: data/drugs.smi
+          separator: comma
+          idColumn: 0
+          molColumn: Drug
+          yColumn: Y
+          readHeader: true
+          writeHeader: true
+          splitMethod: random
         checks:
           exitCode: 0
           outputs:
-          - name: echo.txt
+          - name: training.smi
             checks:
             - exists: true
-            - lineCount: 1
+          - name: test.smi
+            checks:
+            - exists: true
+          - name: validation.smi
+            checks:
+            - exists: true
