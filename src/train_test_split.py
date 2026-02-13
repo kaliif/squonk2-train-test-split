@@ -25,6 +25,8 @@ from rdkit.Chem.Scaffolds import MurckoScaffold
 
 ID_COL_NAME = "ID"
 SMILES_COL_NAME = "SMILES"
+DEFAULT_SPLIT_RATIOS = [0.5, 0.25, 0.25]
+DEFAULT_SPLIT_NAMES = ["training", "test", "validation"]
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -327,28 +329,35 @@ def run(
     fragment_method="hac",
     # missing_val=None,
     split_method="random",
+    n_splits=None,
     split_ratios=(),
     split_names=(),
 ):
 
     DmLog.emit_event("Splitter job started")
 
-    from pathlib import Path
-
-    DmLog.emit_event(f"cwd: {Path('.').absolute()}")
-
     SPLIT_METHODS = {
         "random": weighted_random_split,
         "scaffold": weighted_scaffold_split,
     }
-
-    columns = list(set([id_column, mol_column, y_column]))
 
     df = pd.read_csv(
         filename,
         delimiter=delimiter,
         header=0 if read_header else None,
     )
+
+    # convert to column names
+    if isinstance(id_column, int):
+        id_column = df.columns[id_column]
+
+    if isinstance(mol_column, int):
+        mol_column = df.columns[mol_column]
+
+    if isinstance(y_column, int):
+        y_column = df.columns[y_column]
+
+    columns = list(set([id_column, mol_column, y_column]))
 
     # need mol in several places
     df["rdkit_mol"] = df[mol_column].apply(
@@ -358,8 +367,9 @@ def run(
 
     seed = 42
 
-    if len(split_names) != len(split_ratios):
-        split_names = [f"group_{i + 1}" for i in range(len(split_ratios))]
+    if len(split_names) != n_splits:
+        width = len(str(n_splits))
+        split_names = [f"group_{i:0{width}d}" for i in range(1, n_splits + 1)]
 
     split_groups = {split_names[i]: k for i, k in enumerate(split_ratios)}
 
@@ -392,6 +402,13 @@ def list_of_floats(arg):
     return l
 
 
+def str_or_int(value: str):
+    try:
+        return int(value)
+    except ValueError:
+        return value
+
+
 def main():
     parser = argparse.ArgumentParser(description="Split dataset")
     input_group = parser.add_argument_group("Input/output options")
@@ -406,15 +423,17 @@ def main():
 
     input_group.add_argument(
         "--id-column",
+        type=str_or_int,
         help="Column for name field (zero based integer for .smi, text for SDF)",
     )
     input_group.add_argument(
         "--mol-column",
-        type=str,
+        type=str_or_int,
         help="Column name for molecule when using delineated text formats",
     )
     input_group.add_argument(
         "--y-column",
+        type=str_or_int,
         help="Column name for the Y variable",
     )
     input_group.add_argument(
@@ -444,19 +463,59 @@ def main():
         choices=["random", "scaffold"],
         default="random",
     )
-    split_group.add_argument(
+    split_number_group = parser.add_mutually_exclusive_group()
+    split_number_group.add_argument(
+        "--n-splits",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="Split the input set to number of sets of equal size",
+    )
+    split_number_group.add_argument(
         "--split-ratios",
         type=list_of_floats,
-        default=[0.5, 0.25, 0.25],
+        default=argparse.SUPPRESS,
+        help="Split input to the number of sets using the given ratios",
     )
     split_group.add_argument(
         "--split-names",
         type=list_of_strings,
-        default=["training", "test", "validation"],
+        default=argparse.SUPPRESS,
     )
 
     args = parser.parse_args()
     delimiter = read_delimiter(args.delimiter)
+
+    # split_ratios_provided = hasattr(args, "split_ratios")
+    # n_splits_provided = hasattr(args, "n_splits")
+    # split_names_provided = hasattr(args, "split_names")
+
+    # in current setting, allow only 3 sets, training, test and validation
+    split_ratios_provided = False
+    n_splits_provided = False
+    split_names_provided = False
+
+    # if given, override n-splits
+    if split_ratios_provided:
+        split_ratios = args.split_ratios
+        n_splits = len(split_ratios)
+        if split_names_provided and len(args.split_names) == n_splits:
+            split_names = args.split_names
+
+    elif n_splits_provided:
+        n_splits = args.n_splits
+        split_ratios = [1.0 / n_splits] * n_splits
+        if split_names_provided and len(args.split_names) == n_splits:
+            split_names = args.split_names
+
+    else:
+        split_ratios = DEFAULT_SPLIT_RATIOS
+        split_names = DEFAULT_SPLIT_NAMES
+        n_splits = len(split_ratios)
+
+    # if split_names_provided and len(args.split_names) == n_splits:
+    #     split_names = args.split_names
+    # else:
+    #     split_names = []
 
     print(args)
 
@@ -471,8 +530,9 @@ def main():
         write_header=args.write_header,
         fragment_method=args.fragment_method,
         split_method=args.split_method,
-        split_ratios=args.split_ratios,
-        split_names=args.split_names,
+        n_splits=n_splits,
+        split_ratios=split_ratios,
+        split_names=split_names,
     )
 
 

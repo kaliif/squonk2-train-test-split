@@ -25,7 +25,7 @@ jobs:
       tag: latest
       project-directory: /data
       working-directory: /data
-      fix-permissions: true
+      # fix-permissions: true
     command: >-
       /code/train_test_split.py
       -i '{{ inputFile }}'
@@ -40,6 +40,7 @@ jobs:
       {% if missingVal is defined %}--missing-val '{{ missingVal }}'{% endif %}
       {% if fragmentMethod is defined %}--fragment-method '{{ fragmentMethod }}'{% endif %}
       {% if splitMethod is defined %}--split-method '{{ splitMethod }}'{% endif %}
+      {% if nSplits is defined %}--n-splits '{{ nSplits }}'{% endif %}
       {% if splitRatios is defined %}--split-ratios '{{ splitRatios }}'{% endif %}
       {% if splitNames is defined %}--split-names '{{ splitNames }}'{% endif %}
     variables:
@@ -58,8 +59,9 @@ jobs:
         - missingVal
         - fragmentMethod
         - splitMethod
-        - splitRatios
-        - splitNames
+        # - nSplits
+        # - splitRatios
+        # - splitNames
       inputs:
         type: object
         required:
@@ -70,6 +72,30 @@ jobs:
             mime-types:
             - chemical/x-mdl-sdfile
             - squonk/x-smiles
+            type: file
+      outputs:
+        type: object
+        properties:
+          training:
+            title: Training set
+            mime-types:
+            - chemical/x-mdl-sdfile
+            - squonk/x-smiles
+            creates: training.smi
+            type: file
+          test:
+            title: Training set
+            mime-types:
+            - chemical/x-mdl-sdfile
+            - squonk/x-smiles
+            creates: test.smi
+            type: file
+          validation:
+            title: Validation set
+            mime-types:
+            - chemical/x-mdl-sdfile
+            - squonk/x-smiles
+            creates: validation.smi
             type: file
       options:
         type: object
@@ -117,6 +143,9 @@ jobs:
             enum:
             - random
             - scaffold
+          nSplits:
+            title: Number of splits
+            type: integer
           splitRatios:
             title: Split ratios
             type: string
@@ -126,8 +155,9 @@ jobs:
     # Tests
     tests:
       simple-execution:
-        options:
+        inputs:
           inputFile: data/drugs.smi
+        options:
           separator: comma
           idColumn: 0
           molColumn: Drug
