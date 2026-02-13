@@ -143,15 +143,15 @@ jobs:
             enum:
             - random
             - scaffold
-          nSplits:
-            title: Number of splits
-            type: integer
-          splitRatios:
-            title: Split ratios
-            type: string
-          splitNames:
-            title: Split names
-            type: string
+          # nSplits:
+          #   title: Number of splits
+          #   type: integer
+          # splitRatios:
+          #   title: Split ratios
+          #   type: string
+          # splitNames:
+          #   title: Split names
+          #   type: string
     # Tests
     tests:
       simple-execution:
