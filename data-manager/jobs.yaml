@@ -40,9 +40,6 @@ jobs:
       {% if missingVal is defined %}--missing-val '{{ missingVal }}'{% endif %}
       {% if fragmentMethod is defined %}--fragment-method '{{ fragmentMethod }}'{% endif %}
       {% if splitMethod is defined %}--split-method '{{ splitMethod }}'{% endif %}
-      # {% if nSplits is defined %}--n-splits '{{ nSplits }}'{% endif %}
-      # {% if splitRatios is defined %}--split-ratios '{{ splitRatios }}'{% endif %}
-      # {% if splitNames is defined %}--split-names '{{ splitNames }}'{% endif %}
     variables:
       order:
         options:
@@ -59,9 +56,6 @@ jobs:
         - missingVal
         - fragmentMethod
         - splitMethod
-        # - nSplits
-        # - splitRatios
-        # - splitNames
       inputs:
         type: object
         required:
@@ -143,15 +137,6 @@ jobs:
             enum:
             - random
             - scaffold
-          # nSplits:
-          #   title: Number of splits
-          #   type: integer
-          # splitRatios:
-          #   title: Split ratios
-          #   type: string
-          # splitNames:
-          #   title: Split names
-          #   type: string
     # Tests
     tests:
       simple-execution:
