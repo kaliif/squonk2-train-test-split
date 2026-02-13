@@ -131,7 +131,7 @@ jobs:
             type: string
             pattern: "^[A-Za-z0-9_\\.\\- ]+$"
           splitMethod:
-            title: Fragment method
+            title: Split method
             type: string
             default: random
             enum:
