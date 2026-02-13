@@ -40,9 +40,9 @@ jobs:
       {% if missingVal is defined %}--missing-val '{{ missingVal }}'{% endif %}
       {% if fragmentMethod is defined %}--fragment-method '{{ fragmentMethod }}'{% endif %}
       {% if splitMethod is defined %}--split-method '{{ splitMethod }}'{% endif %}
-      {% if nSplits is defined %}--n-splits '{{ nSplits }}'{% endif %}
-      {% if splitRatios is defined %}--split-ratios '{{ splitRatios }}'{% endif %}
-      {% if splitNames is defined %}--split-names '{{ splitNames }}'{% endif %}
+      # {% if nSplits is defined %}--n-splits '{{ nSplits }}'{% endif %}
+      # {% if splitRatios is defined %}--split-ratios '{{ splitRatios }}'{% endif %}
+      # {% if splitNames is defined %}--split-names '{{ splitNames }}'{% endif %}
     variables:
       order:
         options:
